@@ -1,24 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# misdeed
+
+**Indeed Clone** - Built for Bolt.new hackathon
+
+A modern job search platform clone built with Next.js, featuring a clean UI similar to Indeed's job listing interface. This project demonstrates modern web development practices with React, TypeScript, and Tailwind CSS.
+
+## Features
+
+- 🔍 Job search interface with filters
+- 📱 Responsive design
+- 🎨 Modern UI with shadcn/ui components
+- ⚡ Fast development with Turbopack
+- 🛠️ TypeScript for type safety
 
 ## Getting Started
 
-First, run the development server:
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+### Prerequisites
+
+Make sure you have [Bun](https://bun.sh) installed:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+curl -fsSL https://bun.sh/install | bash
+```
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/biohacker101/misdeed.git
+cd misdeed
+```
+
+2. Install dependencies:
+```bash
+bun install
+```
+
+3. Run the development server:
+```bash
 bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Package Manager**: Bun
+- **Fonts**: [Geist](https://vercel.com/font) font family
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app directory
+│   ├── page.tsx        # Main page component
+│   ├── layout.tsx      # Root layout
+│   └── globals.css     # Global styles
+├── components/         # Reusable components
+│   └── ui/            # shadcn/ui components
+└── lib/               # Utility functions
+```
 
 ## Learn More
 
