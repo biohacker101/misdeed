@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Search, MapPin, ChevronDown, MoreVertical, Star, ExternalLink, Bookmark, Share } from 'lucide-react'
+import { MisdeedLogo } from '@/components/ui/logo'
 
 export default function IndeedClone() {
   const [selectedJob, setSelectedJob] = useState(0)
@@ -56,7 +57,7 @@ export default function IndeedClone() {
       <header className="border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
           <div className="flex items-center space-x-8">
-            <div className="text-blue-600 font-bold text-2xl">indeed</div>
+            <MisdeedLogo />
             <nav className="hidden md:flex space-x-6">
               <a href="/" className="text-gray-600 hover:text-gray-900 underline">Home</a>
               <a href="/company-reviews" className="text-gray-600 hover:text-gray-900">Company reviews</a>
