@@ -324,7 +324,7 @@ I'll review applications as they come in and reply within 48 hours. Help me turn
               </div>
               <div className="flex items-center justify-between mt-2">
                 <div className="text-sm text-gray-600">
-                  Sort by: <span className="text-blue-600">relevance</span> - <a href="/jobs?sort=date" className=\"text-blue-600 hover:text-blue-700">date</a>
+                  Sort by: <span className="text-blue-600">relevance</span> - <a href="/jobs?sort=date" className="text-blue-600 hover:text-blue-700">date</a>
                 </div>
                 <div className="text-sm text-gray-600">
                   {jobs.length} job{jobs.length !== 1 ? 's' : ''}
