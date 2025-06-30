@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -8,47 +8,86 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Search, MapPin, ChevronDown, MoreVertical, Star, ExternalLink, Bookmark, Share } from 'lucide-react'
+import { Search, MapPin, ChevronDown, MoreVertical, Star, ExternalLink, Bookmark, Share, AlertTriangle, Shield } from 'lucide-react'
 import { MisdeedLogo } from '@/components/ui/logo'
 
-export default function IndeedClone() {
-  const [selectedJob, setSelectedJob] = useState(0)
+interface Misdeed {
+  id: number
+  job_title: string
+  company_name: string
+  description: string
+  location: string
+  original_url: string
+  source_platform: string
+  scam_score: number
+  scam_reasons: string[]
+  date_scraped: string
+}
 
-  const jobs = [
-    {
-      title: "Back End Developer - AI Trainer",
-      company: "DataAnnotation",
-      location: "Remote in Hayward, CA",
-      salary: "From $40 an hour",
-      tags: ["Contract", "Flexible schedule"],
-      hiringMultiple: true
-    },
-    {
-      title: "Product Manager - AI Trainer",
-      company: "DataAnnotation",
-      location: "Remote in Santa Clara, CA",
-      salary: "From $40 an hour",
-      tags: ["Contract", "Flexible schedule"],
-      hiringMultiple: false
-    },
-    {
-      title: "FinTech Product Analyst - AI Trainer",
-      company: "DataAnnotation",
-      location: "Remote in Palo Alto, CA",
-      salary: "From $40 an hour",
-      tags: ["Contract", "Flexible schedule"],
-      hiringMultiple: true
+export default function MisdeedApp() {
+  const [misdeeds, setMisdeeds] = useState<Misdeed[]>([])
+  const [selectedMisdeed, setSelectedMisdeed] = useState<Misdeed | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchLocation, setSearchLocation] = useState('')
+
+  useEffect(() => {
+    fetchMisdeeds()
+  }, [])
+
+  const fetchMisdeeds = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/misdeeds')
+      const data = await response.json()
+      
+      if (Array.isArray(data)) {
+        setMisdeeds(data)
+        if (data.length > 0) {
+          setSelectedMisdeed(data[0])
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching misdeeds:', error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const selectedJobDetail = {
-    title: "Algorithms and AI Principal Engineer",
-    company: "ASML",
-    rating: 3.8,
-    location: "San Jose, CA 95134",
-    salary: "$186,750 - $311,250 a year",
-    type: "Full-time",
-    description: "You must create an Indeed account before continuing to the company website to apply"
+  const handleSearch = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (searchQuery) params.append('search', searchQuery)
+      
+      const response = await fetch(`/api/misdeeds?${params}`)
+      const data = await response.json()
+      
+      if (Array.isArray(data)) {
+        setMisdeeds(data)
+        if (data.length > 0) {
+          setSelectedMisdeed(data[0])
+        }
+      }
+    } catch (error) {
+      console.error('Error searching misdeeds:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getScamBadgeColor = (score: number) => {
+    if (score >= 15) return 'bg-red-600'
+    if (score >= 10) return 'bg-red-500'
+    if (score >= 5) return 'bg-orange-500'
+    return 'bg-yellow-500'
+  }
+
+  const getScamLevel = (score: number) => {
+    if (score >= 15) return 'EXTREME RISK'
+    if (score >= 10) return 'HIGH RISK'
+    if (score >= 5) return 'MODERATE RISK'
+    return 'LOW RISK'
   }
 
   return (
@@ -79,354 +118,181 @@ export default function IndeedClone() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 className="pl-10 h-12 text-base"
-                placeholder="Scale AI"
-                defaultValue="Scale AI"
+                placeholder="Search scam job types..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
             <div className="flex-1 relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 className="pl-10 h-12 text-base"
-                placeholder="Pleasanton, CA"
-                defaultValue="Pleasanton, CA"
+                placeholder="Location"
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
               />
             </div>
-            <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-700">
-              Search
+            <Button onClick={handleSearch} className="h-12 px-8 bg-red-600 hover:bg-red-700">
+              Search Scams
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-gray-50 border-b border-gray-200">
+      {/* Alert Banner */}
+      <div className="bg-red-50 border-b border-red-200">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex flex-wrap gap-2">
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Pay" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any pay</SelectItem>
-                <SelectItem value="40k">$40,000+</SelectItem>
-                <SelectItem value="60k">$60,000+</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Remote" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="remote">Remote</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Within 25 miles" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="25">Within 25 miles</SelectItem>
-                <SelectItem value="50">Within 50 miles</SelectItem>
-                <SelectItem value="100">Within 100 miles</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Company" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any company</SelectItem>
-                <SelectItem value="dataannotation">DataAnnotation</SelectItem>
-                <SelectItem value="asml">ASML</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Job Type" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any type</SelectItem>
-                <SelectItem value="fulltime">Full-time</SelectItem>
-                <SelectItem value="contract">Contract</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Employer/Recruiter" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="employer">Employer</SelectItem>
-                <SelectItem value="recruiter">Recruiter</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Location" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any location</SelectItem>
-                <SelectItem value="ca">California</SelectItem>
-                <SelectItem value="remote">Remote</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Experience level" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any experience</SelectItem>
-                <SelectItem value="entry">Entry level</SelectItem>
-                <SelectItem value="mid">Mid level</SelectItem>
-                <SelectItem value="senior">Senior level</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Education" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any education</SelectItem>
-                <SelectItem value="bachelors">Bachelor's</SelectItem>
-                <SelectItem value="masters">Master's</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-wrap gap-2 mt-2">
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Encouraged to apply" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="diversity">Diversity encouraged</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger className="w-auto bg-white border-gray-300">
-                <SelectValue placeholder="Date posted" />
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any time</SelectItem>
-                <SelectItem value="1day">Last 24 hours</SelectItem>
-                <SelectItem value="3days">Last 3 days</SelectItem>
-                <SelectItem value="7days">Last 7 days</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Resume Upload Banner */}
-      <div className="bg-blue-50 border-b border-blue-200">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="text-sm">
-            <a href="/upload-resume" className="text-blue-600 hover:text-blue-700 underline">Upload your resume</a>
-            <span className="text-gray-600"> - Let employers find you</span>
+          <div className="flex items-center space-x-2 text-red-800">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="font-medium">
+              ⚠️ WARNING: These are SCAM job postings detected by our AI system. Do not apply or provide personal information!
+            </span>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex">
-          {/* Left Side - Job Listings */}
-          <div className="w-1/2 border-r border-gray-200">
-            {/* Results Header */}
-            <div className="p-4 bg-white border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Scale AI jobs in Pleasanton, CA
-                </div>
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <div className="text-sm text-gray-600">
-                  Sort by: <span className="text-blue-600">relevance</span> - <a href="/jobs?sort=date" className="text-blue-600 hover:text-blue-700">date</a>
-                </div>
-                <div className="text-sm text-gray-600">
-                  400+ jobs
-                </div>
-              </div>
+      <div className="max-w-7xl mx-auto flex">
+        {/* Job List */}
+        <div className="w-1/3 border-r border-gray-200 bg-white">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {loading ? 'Loading...' : `${misdeeds.length} Scam Jobs Found`}
+              </h2>
+              <Shield className="w-5 h-5 text-red-600" />
             </div>
+          </div>
 
-            {/* Job Cards */}
-            <div className="bg-gray-50">
-              {jobs.map((job, index) => (
-                <Card
-                  key={`${job.title}-${job.company}-${index}`}
-                  className={`m-4 cursor-pointer hover:shadow-md transition-shadow ${selectedJob === index ? 'ring-2 ring-blue-500' : ''}`}
-                  onClick={() => setSelectedJob(index)}
+          <div className="overflow-y-auto max-h-screen">
+            {loading ? (
+              <div className="p-4 text-center text-gray-500">Loading scam jobs...</div>
+            ) : misdeeds.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">No scam jobs found</div>
+            ) : (
+              misdeeds.map((misdeed, index) => (
+                <div
+                  key={misdeed.id}
+                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                    selectedMisdeed?.id === misdeed.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                  }`}
+                  onClick={() => setSelectedMisdeed(misdeed)}
                 >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        {job.hiringMultiple && (
-                          <div className="text-xs text-gray-500 mb-1">Hiring multiple candidates</div>
-                        )}
-                        <h3 className="font-medium text-blue-600 hover:text-blue-700 text-base">
-                          {job.title}
-                        </h3>
-                        <div className="text-sm text-gray-600 mt-1">{job.company}</div>
-                        <div className="text-sm text-gray-600">{job.location}</div>
-                      </div>
-                      <MoreVertical className="w-5 h-5 text-gray-400" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-sm font-medium text-gray-900 mb-2">{job.salary}</div>
-                    <div className="flex gap-2 mb-3">
-                      {job.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <a href="/jobs/similar" className="text-blue-600 hover:text-blue-700 text-sm flex items-center">
-                      View similar jobs with this employer
-                      <ChevronDown className="w-4 h-4 ml-1 rotate-270" />
-                    </a>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Side - Job Details */}
-          <div className="w-1/2 bg-white">
-            <div className="p-6">
-              {/* Close button */}
-              <div className="flex justify-end mb-4">
-                <button className="text-gray-400 hover:text-gray-600">✕</button>
-              </div>
-
-              {/* Job Title */}
-              <h1 className="text-2xl font-semibold mb-4">{selectedJobDetail.title}</h1>
-
-              {/* Company Info */}
-              <div className="flex items-center space-x-3 mb-4">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-medium">
-                    ASML
-                  </AvatarFallback>
-                </Avatar>
-                <div>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-medium text-gray-900 line-clamp-2">{misdeed.job_title}</h3>
+                    <Badge className={`${getScamBadgeColor(misdeed.scam_score)} text-white text-xs`}>
+                      {misdeed.scam_score}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">{misdeed.company_name}</p>
+                  <p className="text-sm text-gray-500 mb-2">{misdeed.location}</p>
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium text-blue-600">{selectedJobDetail.company}</span>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-sm text-gray-600">{selectedJobDetail.rating}</span>
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Badge variant="outline" className="text-xs">
+                      {getScamLevel(misdeed.scam_score)}
+                    </Badge>
+                    <span className="text-xs text-gray-500">
+                      {new Date(misdeed.date_scraped).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Job Details */}
+        <div className="flex-1 bg-white">
+          {selectedMisdeed ? (
+            <div className="p-6">
+              {/* Job Header */}
+              <div className="mb-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                      {selectedMisdeed.job_title}
+                    </h1>
+                    <div className="flex items-center space-x-4 text-gray-600 mb-2">
+                      <span className="font-medium">{selectedMisdeed.company_name}</span>
+                      <span>•</span>
+                      <span>{selectedMisdeed.location}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={`${getScamBadgeColor(selectedMisdeed.scam_score)} text-white`}>
+                      Scam Score: {selectedMisdeed.scam_score}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Scam Alert */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold text-red-800 mb-2">
+                        🚨 {getScamLevel(selectedMisdeed.scam_score)} - SCAM DETECTED
+                      </h3>
+                      <div className="space-y-1">
+                        {selectedMisdeed.scam_reasons.map((reason, index) => (
+                          <div key={index} className="flex items-center space-x-2 text-sm text-red-700">
+                            <span>•</span>
+                            <span>{reason}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Location and Salary */}
-              <div className="mb-4">
-                <div className="text-gray-600 mb-1">{selectedJobDetail.location}</div>
-                <div className="text-lg font-medium">
-                  {selectedJobDetail.salary} - {selectedJobDetail.type}
-                </div>
-              </div>
-
-              {/* Apply Button */}
-              <div className="mb-6">
-                <div className="text-sm text-gray-600 mb-3">
-                  {selectedJobDetail.description}
-                </div>
-                <div className="flex space-x-2">
-                  <Button className="bg-blue-600 hover:bg-blue-700 flex items-center">
-                    Apply on company site
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                {/* Action Buttons */}
+                <div className="flex space-x-3 mb-6">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(selectedMisdeed.original_url, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Original (CAUTION)
                   </Button>
-                  <Button variant="outline" size="icon">
-                    <Bookmark className="w-4 h-4" />
+                  <Button variant="outline" size="sm">
+                    <Bookmark className="w-4 h-4 mr-2" />
+                    Report to Authorities
                   </Button>
-                  <Button variant="outline" size="icon">
-                    <Share className="w-4 h-4" />
+                  <Button variant="outline" size="sm">
+                    <Share className="w-4 h-4 mr-2" />
+                    Share Warning
                   </Button>
                 </div>
               </div>
 
               <Separator className="my-6" />
 
-              {/* Profile Insights */}
-              <div className="mb-6">
-                <h2 className="text-lg font-medium mb-2">Profile insights</h2>
-                <div className="text-sm text-gray-600 mb-4">
-                  Find out how your skills align with the job description
-                </div>
-
-                {/* Skills Section */}
-                <div className="mb-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs">⚡</span>
-                    </div>
-                    <span className="font-medium">Skills</span>
-                  </div>
-                  <div className="ml-8">
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-sm">Do you have experience in Semiconductor experience?</span>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600">Yes</Button>
-                        <Button variant="outline" size="sm">No</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Education Section */}
-                <div className="mb-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs">🎓</span>
-                    </div>
-                    <span className="font-medium">Education</span>
-                  </div>
-                  <div className="ml-8">
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-sm">Do you have a Master's degree?</span>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600">Yes</Button>
-                        <Button variant="outline" size="sm">No</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator className="my-6" />
-
-              {/* Job Details */}
+              {/* Job Description */}
               <div>
-                <h2 className="text-lg font-medium mb-4">Job details</h2>
-                {/* Additional job details would go here */}
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Scam Job Description (ANALYSIS ONLY)
+                </h2>
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="text-gray-700 whitespace-pre-wrap">{selectedMisdeed.description}</p>
+                </div>
+              </div>
+
+              {/* Source Info */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-medium text-blue-900 mb-2">Detection Information</h3>
+                <div className="text-sm text-blue-700 space-y-1">
+                  <p>Source Platform: {selectedMisdeed.source_platform}</p>
+                  <p>Detected: {new Date(selectedMisdeed.date_scraped).toLocaleString()}</p>
+                  <p>Scam Score: {selectedMisdeed.scam_score}/20 (Higher = More Suspicious)</p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-6 text-center text-gray-500">
+              Select a scam job posting to view details
+            </div>
+          )}
         </div>
       </div>
     </div>
