@@ -40,6 +40,7 @@ export default function IndeedClone() {
   }, [])
 
   // Reset selected job when search results change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We need to reset selected job when search/location changes
   useEffect(() => {
     setSelectedJob(0)
   }, [searchQuery, locationQuery])

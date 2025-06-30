@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
     images: {
       unoptimized: true,
       domains: [
@@ -33,7 +34,5 @@ const nextConfig = {
     },
   };
   
-  module.exports = {
-    pageExtensions: ['ts', 'tsx', 'js', 'jsx']
-  }
+  module.exports = nextConfig;
   

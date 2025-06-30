@@ -190,8 +190,8 @@ export default function MisdeedReviews() {
           <p className="text-gray-600 mb-8">Find your perfect flavor of weirdness</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {misdeedTypes.map((misdeed, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 group">
+            {misdeedTypes.map((misdeed) => (
+              <Card key={misdeed.name} className="cursor-pointer hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 group">
                 <CardContent className="p-6 text-center">
                   <div className={`w-16 h-16 ${misdeed.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
                     <span className="text-2xl">{misdeed.icon}</span>
@@ -222,8 +222,8 @@ export default function MisdeedReviews() {
           <p className="text-gray-600 mb-8">See who's paying for the weirdest favors (and who actually pays up)</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredEmployers.map((employer, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-xl transition-all duration-200 border border-gray-200 hover:border-blue-300 group">
+            {featuredEmployers.map((employer) => (
+              <Card key={employer.name} className="cursor-pointer hover:shadow-xl transition-all duration-200 border border-gray-200 hover:border-blue-300 group">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4 mb-4">
                     <div className={`w-14 h-14 ${employer.bgColor} rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg group-hover:scale-110 transition-transform`}>

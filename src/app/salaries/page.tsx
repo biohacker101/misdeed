@@ -101,7 +101,7 @@ export default function PostJob() {
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-blue-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-black/20" />
         <div className="max-w-7xl mx-auto px-4 py-20 relative">
           <div className="flex items-center justify-between">
             <div className="flex-1 max-w-2xl">
@@ -114,15 +114,15 @@ export default function PostJob() {
               </p>
               <div className="flex items-center space-x-6 text-slate-300">
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full" />
                   <span className="text-sm">Free to post</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full" />
                   <span className="text-sm">Instant visibility</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full" />
                   <span className="text-sm">Quality candidates</span>
                 </div>
               </div>
@@ -158,9 +158,9 @@ export default function PostJob() {
                 </div>
                 
                 {/* Background decorative elements */}
-                <div className="absolute top-10 right-20 w-4 h-4 bg-blue-400/30 rounded-full animate-ping"></div>
-                <div className="absolute bottom-20 left-10 w-6 h-6 bg-purple-400/30 rounded-full animate-ping delay-500"></div>
-                <div className="absolute top-32 left-20 w-3 h-3 bg-green-400/30 rounded-full animate-ping delay-1000"></div>
+                <div className="absolute top-10 right-20 w-4 h-4 bg-blue-400/30 rounded-full animate-ping" />
+                <div className="absolute bottom-20 left-10 w-6 h-6 bg-purple-400/30 rounded-full animate-ping delay-500" />
+                <div className="absolute top-32 left-20 w-3 h-3 bg-green-400/30 rounded-full animate-ping delay-1000" />
               </div>
             </div>
           </div>
