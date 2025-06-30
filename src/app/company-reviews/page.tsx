@@ -5,84 +5,120 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { MisdeedLogo } from '@/components/ui/logo'
 
-export default function CompanyReviews() {
+export default function MisdeedReviews() {
   const [searchQuery, setSearchQuery] = useState('')
 
-  const industries = [
-    { name: 'Aerospace & Defense', icon: '✈️', color: 'bg-pink-100' },
-    { name: 'Agriculture', icon: '🌾', color: 'bg-blue-100' },
-    { name: 'Arts, Entertainment & Recreation', icon: '🎭', color: 'bg-green-100' },
-    { name: 'Construction, Repair & Maintenance Services', icon: '🔧', color: 'bg-orange-100' },
-    { name: 'Education', icon: '📚', color: 'bg-pink-100' },
-    { name: 'Energy, Mining & Utilities', icon: '⚡', color: 'bg-blue-100' }
+  const misdeedTypes = [
+    { name: 'Human Furniture', icon: '🪑', color: 'bg-pink-100', description: 'Be my coat rack for a photoshoot' },
+    { name: 'Covert Ops', icon: '🕵️', color: 'bg-blue-100', description: 'Secretly photograph my date' },
+    { name: 'Digital Doppelgängers', icon: '📹', color: 'bg-green-100', description: 'Sit in my Zoom calls' },
+    { name: 'Live Stream Sherpas', icon: '📱', color: 'bg-orange-100', description: 'Hold a camera for my livestream' },
+    { name: 'Emotional Stand-Ins', icon: '🎭', color: 'bg-purple-100', description: 'Agree with my in-laws on video' },
+    { name: 'Miscellaneous Mayhem', icon: '🌶️', color: 'bg-yellow-100', description: 'Taste-test my new hot sauce recipe' }
   ]
 
-  const popularCompanies = [
+  const featuredEmployers = [
     {
-      name: 'Amazon Warehouse',
-      logo: '📦',
-      rating: 3.5,
-      reviews: '73,107 reviews',
-      bgColor: 'bg-orange-500'
+      name: 'Jordan Lee',
+      nickname: 'The Date Documenter',
+      logo: '📷',
+      rating: 4.9,
+      emojiRating: '😈😈😈😈😈',
+      reviews: '23 stealth reviews',
+      bgColor: 'bg-gradient-to-br from-purple-500 to-pink-500',
+      specialty: 'Covert Date Paparazzi',
+      weirdnessLevel: 'Professional Creep'
     },
     {
-      name: 'Chick-fil-A Corporate',
-      logo: '🐔',
-      rating: 4.1,
-      reviews: '127 reviews',
-      bgColor: 'bg-red-500'
+      name: 'Alex Chen',
+      nickname: 'The Meeting Ghost',
+      logo: '👻',
+      rating: 4.7,
+      emojiRating: '😜😜😜😜😜',
+      reviews: '18 phantom appearances',
+      bgColor: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+      specialty: 'Webcam Stand-In',
+      weirdnessLevel: 'Digitally Absent'
     },
     {
-      name: 'Nordstrom',
-      logo: 'N',
+      name: 'Taylor Rivers',
+      nickname: 'The Plant Whisperer',
+      logo: '🪴',
+      rating: 4.5,
+      emojiRating: '🌱🌱🌱🌱🌱',
+      reviews: '31 hydration sessions',
+      bgColor: 'bg-gradient-to-br from-green-500 to-emerald-500',
+      specialty: 'Live-in Plant Waterer',
+      weirdnessLevel: 'Botanically Obsessed'
+    },
+    {
+      name: 'Casey "ChillCo"',
+      nickname: 'The Human Thermostat',
+      logo: '🥶',
+      rating: 4.2,
+      emojiRating: '❄️❄️❄️❄️❄️',
+      reviews: '12 temperature checks',
+      bgColor: 'bg-gradient-to-br from-blue-400 to-blue-600',
+      specialty: 'Human Air Conditioner',
+      weirdnessLevel: 'Perpetually Frozen'
+    },
+    {
+      name: 'Morgan "SauceLord"',
+      nickname: 'The Spice Tester',
+      logo: '🌶️',
       rating: 3.8,
-      reviews: '17,924 reviews',
-      bgColor: 'bg-black'
+      emojiRating: '🔥🔥🔥🔥',
+      reviews: '47 burned tongues',
+      bgColor: 'bg-gradient-to-br from-red-500 to-orange-500',
+      specialty: 'Hot Sauce Guinea Pig',
+      weirdnessLevel: 'Dangerously Spicy'
     },
     {
-      name: 'Cintas',
-      logo: '🧹',
-      rating: 3.2,
-      reviews: '5,881 reviews',
-      bgColor: 'bg-blue-500'
+      name: 'Riley "EchoMaster"',
+      nickname: 'The Sound Shadow',
+      logo: '🎤',
+      rating: 4.3,
+      emojiRating: '🎵🎵🎵🎵🎵',
+      reviews: '15 echo experiences',
+      bgColor: 'bg-gradient-to-br from-purple-500 to-indigo-500',
+      specialty: 'Professional Audience Member',
+      weirdnessLevel: 'Acoustically Weird'
     },
     {
-      name: 'Ross Dress For Less',
-      logo: '👔',
-      rating: 3.4,
-      reviews: '18,366 reviews',
-      bgColor: 'bg-teal-500'
-    },
-    {
-      name: 'Planet Fitness',
-      logo: '💪',
-      rating: 3.7,
-      reviews: '7,864 reviews',
-      bgColor: 'bg-purple-500'
-    },
-    {
-      name: 'Vector Marketing',
-      logo: '📈',
-      rating: 2.8,
-      reviews: '12,453 reviews',
-      bgColor: 'bg-blue-600'
-    },
-    {
-      name: 'AutoZone',
-      logo: '🚗',
-      rating: 3.5,
-      reviews: '8,921 reviews',
-      bgColor: 'bg-red-600'
-    },
-    {
-      name: 'Publix',
-      logo: 'P',
+      name: 'Sam "FlexCorp"',
+      nickname: 'The Human Furniture',
+      logo: '🪑',
       rating: 3.9,
-      reviews: '15,267 reviews',
-      bgColor: 'bg-green-600'
+      emojiRating: '💪💪💪💪',
+      reviews: '8 posture reviews',
+      bgColor: 'bg-gradient-to-br from-amber-500 to-orange-500',
+      specialty: 'Living Ottoman',
+      weirdnessLevel: 'Structurally Sound'
+    },
+    {
+      name: 'Avery "WatchCo"',
+      nickname: 'The Professional Watcher',
+      logo: '👀',
+      rating: 4.1,
+      emojiRating: '👁️👁️👁️👁️👁️',
+      reviews: '29 surveillance reports',
+      bgColor: 'bg-gradient-to-br from-gray-500 to-slate-600',
+      specialty: 'Staring Contests & Observation',
+      weirdnessLevel: 'Uncomfortably Attentive'
+    },
+    {
+      name: 'Quinn "TaskMaster"',
+      nickname: 'The Oddball',
+      logo: '🎯',
+      rating: 4.6,
+      emojiRating: '🤪🤪🤪🤪🤪',
+      reviews: '52 bizarre experiences',
+      bgColor: 'bg-gradient-to-br from-pink-500 to-rose-500',
+      specialty: 'Miscellaneous Weird Tasks',
+      weirdnessLevel: 'Delightfully Unhinged'
     }
   ]
 
@@ -116,8 +152,8 @@ export default function CompanyReviews() {
             <MisdeedLogo />
             <nav className="hidden md:flex space-x-6">
               <a href="/" className="text-gray-600 hover:text-gray-900">Home</a>
-              <a href="/company-reviews" className="text-gray-600 hover:text-gray-900 underline">Company reviews</a>
-              <a href="/salaries" className="text-gray-600 hover:text-gray-900">Find salaries</a>
+              <a href="/company-reviews" className="text-gray-600 hover:text-gray-900 underline">Employer reviews</a>
+              <a href="/salaries" className="text-gray-600 hover:text-gray-900">Post Job</a>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
@@ -131,106 +167,108 @@ export default function CompanyReviews() {
       <div className="max-w-4xl mx-auto px-4 py-16">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-semibold text-gray-900 mb-4">
-            Find great places to work
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Rate your weirdest gig experiences
           </h1>
           <p className="text-lg text-gray-600 mb-8">
-            Get access to millions of company reviews
+            See which misdeed employers actually pay up and treat you right (relatively speaking)
           </p>
 
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-4">
-            <div className="flex items-center">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  className="pl-10 h-12 text-base border-gray-300"
-                  placeholder="Company name or job title"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button className="h-12 px-8 ml-2 bg-blue-600 hover:bg-blue-700">
-                Find Companies
-              </Button>
-            </div>
-          </div>
 
-          {/* Salaries Link */}
-          <p className="text-blue-600 hover:text-blue-700 cursor-pointer">
-            Do you want to search for salaries?
+
+          {/* Post Misdeed Link */}
+          <p className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium">
+            Want to post your own bizarre gig? 
+            <a href="/salaries" className="underline ml-1">Create a misdeed →</a>
           </p>
         </div>
 
-        {/* Browse by Industry */}
+        {/* Browse by Misdeed Type */}
         <div className="mb-16">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-8">
-            Browse companies by industry
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Browse by misdeed type
           </h2>
+          <p className="text-gray-600 mb-8">Find your perfect flavor of weirdness</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {industries.map((industry, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200">
+            {misdeedTypes.map((misdeed, index) => (
+              <Card key={index} className="cursor-pointer hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 group">
                 <CardContent className="p-6 text-center">
-                  <div className={`w-16 h-16 ${industry.color} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                    <span className="text-2xl">{industry.icon}</span>
+                  <div className={`w-16 h-16 ${misdeed.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                    <span className="text-2xl">{misdeed.icon}</span>
                   </div>
-                  <h3 className="font-medium text-gray-900 text-sm leading-tight">
-                    {industry.name}
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-2">
+                    {misdeed.name}
                   </h3>
+                  <p className="text-xs text-gray-600 italic">
+                    "{misdeed.description}"
+                  </p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
           <div className="text-center">
-            <a href="/industries" className="text-blue-600 hover:text-blue-700 font-medium">
-              See all industries
+            <a href="/misdeed-types" className="text-blue-600 hover:text-blue-700 font-medium">
+              🔮 Explore all weird categories
             </a>
           </div>
         </div>
 
-        {/* Popular Companies */}
+        {/* Featured Employers */}
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-8">
-            Popular companies
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Our most... "distinguished" employers
           </h2>
+          <p className="text-gray-600 mb-8">See who's paying for the weirdest favors (and who actually pays up)</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {popularCompanies.map((company, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200">
+            {featuredEmployers.map((employer, index) => (
+              <Card key={index} className="cursor-pointer hover:shadow-xl transition-all duration-200 border border-gray-200 hover:border-blue-300 group">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4 mb-4">
-                    <div className={`w-12 h-12 ${company.bgColor} rounded flex items-center justify-center text-white font-bold`}>
-                      {company.logo}
+                    <div className={`w-14 h-14 ${employer.bgColor} rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg group-hover:scale-110 transition-transform`}>
+                      {employer.logo}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        {company.name}
+                      <h3 className="font-bold text-gray-900 mb-1">
+                        {employer.name}
                       </h3>
+                      <p className="text-xs text-blue-600 font-medium mb-2">
+                        {employer.nickname}
+                      </p>
                       <div className="flex items-center space-x-2 mb-2">
-                        <div className="flex items-center">
-                          {renderStars(company.rating)}
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          {company.rating}
+                        <span className="text-lg">
+                          {employer.emojiRating}
+                        </span>
+                        <span className="text-sm text-gray-600 font-medium">
+                          {employer.rating}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600">
-                        {company.reviews}
+                      <p className="text-xs text-gray-600 mb-1">
+                        {employer.reviews}
                       </p>
+                      <Badge variant="outline" className="text-xs mb-2">
+                        {employer.weirdnessLevel}
+                      </Badge>
                     </div>
                   </div>
                   
-                  <div className="flex space-x-4 text-sm">
-                    <a href={`/companies/${company.name.toLowerCase().replace(/\s+/g, '-')}/salaries`} className="text-blue-600 hover:text-blue-700">
-                      Salaries
+                  <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                    <p className="text-sm font-medium text-gray-800">
+                      "{employer.specialty}"
+                    </p>
+                  </div>
+                  
+                  <div className="flex space-x-4 text-xs">
+                    <a href={`/employers/${employer.name.toLowerCase().replace(/\s+/g, '-')}/gigs`} className="text-blue-600 hover:text-blue-700 font-medium">
+                      🎯 View Gigs
                     </a>
-                    <a href={`/companies/${company.name.toLowerCase().replace(/\s+/g, '-')}/questions`} className="text-blue-600 hover:text-blue-700">
-                      Q&A
+                    <a href={`/employers/${employer.name.toLowerCase().replace(/\s+/g, '-')}/reviews`} className="text-blue-600 hover:text-blue-700 font-medium">
+                      📝 Reviews
                     </a>
-                    <a href={`/companies/${company.name.toLowerCase().replace(/\s+/g, '-')}/jobs`} className="text-blue-600 hover:text-blue-700">
-                      Open jobs
+                    <a href={`/employers/${employer.name.toLowerCase().replace(/\s+/g, '-')}/apply`} className="text-blue-600 hover:text-blue-700 font-medium">
+                      🚀 Apply
                     </a>
                   </div>
                 </CardContent>
