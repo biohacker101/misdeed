@@ -1,6 +1,20 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+
+interface Job {
+  title: string
+  company: string
+  location: string
+  salary: string
+  tags: string[]
+  hiringMultiple: boolean
+  rating?: number
+  type?: string
+  email?: string
+  description?: string
+  fullDescription?: string
+}
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -13,7 +27,7 @@ import { MisdeedLogo } from '@/components/ui/logo'
 
 export default function IndeedClone() {
   const [selectedJob, setSelectedJob] = useState(0)
-  const [userJobs, setUserJobs] = useState<any[]>([])
+  const [userJobs, setUserJobs] = useState<Job[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [locationQuery, setLocationQuery] = useState('')
 
