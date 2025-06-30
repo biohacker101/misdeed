@@ -8,47 +8,58 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Search, MapPin, ChevronDown, MoreVertical, Star, ExternalLink, Bookmark, Share, AlertTriangle, Shield } from 'lucide-react'
+import { Search, MapPin, ChevronDown, MoreVertical, Star, ExternalLink, Bookmark, Share, Plus, Briefcase, DollarSign, User, Calendar } from 'lucide-react'
 import { MisdeedLogo } from '@/components/ui/logo'
 
-interface Misdeed {
+interface Job {
   id: number
-  job_title: string
-  company_name: string
+  title: string
   description: string
+  category: string
   location: string
-  original_url: string
-  source_platform: string
-  scam_score: number
-  scam_reasons: string[]
-  date_scraped: string
+  pay_amount: number
+  pay_type: string
+  contact_method: string
+  username: string
+  created_at: string
 }
 
+// Job categories for filtering
+const JOB_CATEGORIES = [
+  "All Categories",
+  "Events & Gigs",
+  "Creative & Design",
+  "Home & Labor",
+  "Tech & Digital",
+  "Quirky & Miscellaneous"
+]
+
 export default function MisdeedApp() {
-  const [misdeeds, setMisdeeds] = useState<Misdeed[]>([])
-  const [selectedMisdeed, setSelectedMisdeed] = useState<Misdeed | null>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchLocation, setSearchLocation] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All Categories')
 
   useEffect(() => {
-    fetchMisdeeds()
+    fetchJobs()
   }, [])
 
-  const fetchMisdeeds = async () => {
+  const fetchJobs = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/misdeeds')
+      const response = await fetch('/api/jobs') // Using new jobs API
       const data = await response.json()
       
       if (Array.isArray(data)) {
-        setMisdeeds(data)
+        setJobs(data)
         if (data.length > 0) {
-          setSelectedMisdeed(data[0])
+          setSelectedJob(data[0])
         }
       }
     } catch (error) {
-      console.error('Error fetching misdeeds:', error)
+      console.error('Error fetching jobs:', error)
     } finally {
       setLoading(false)
     }
@@ -58,36 +69,78 @@ export default function MisdeedApp() {
     try {
       setLoading(true)
       const params = new URLSearchParams()
-      if (searchQuery) params.append('search', searchQuery)
+      if (selectedCategory && selectedCategory !== 'All Categories') {
+        params.append('category', selectedCategory)
+      }
       
-      const response = await fetch(`/api/misdeeds?${params}`)
+      const response = await fetch(`/api/jobs?${params}`)
       const data = await response.json()
       
       if (Array.isArray(data)) {
-        setMisdeeds(data)
-        if (data.length > 0) {
-          setSelectedMisdeed(data[0])
+        let filteredJobs = data
+        
+        // Client-side filtering for search query and location
+        if (searchQuery) {
+          filteredJobs = filteredJobs.filter(job =>
+            job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            job.description.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        }
+        
+        if (searchLocation) {
+          filteredJobs = filteredJobs.filter(job =>
+            job.location.toLowerCase().includes(searchLocation.toLowerCase())
+          )
+        }
+        
+        setJobs(filteredJobs)
+        if (filteredJobs.length > 0) {
+          setSelectedJob(filteredJobs[0])
         }
       }
     } catch (error) {
-      console.error('Error searching misdeeds:', error)
+      console.error('Error searching jobs:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const getScamBadgeColor = (score: number) => {
-    if (score >= 15) return 'bg-red-600'
-    if (score >= 10) return 'bg-red-500'
-    if (score >= 5) return 'bg-orange-500'
-    return 'bg-yellow-500'
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      "Events & Gigs": "bg-purple-100 text-purple-800",
+      "Creative & Design": "bg-pink-100 text-pink-800",
+      "Home & Labor": "bg-green-100 text-green-800",
+      "Tech & Digital": "bg-blue-100 text-blue-800",
+      "Quirky & Miscellaneous": "bg-orange-100 text-orange-800"
+    }
+    return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800"
   }
 
-  const getScamLevel = (score: number) => {
-    if (score >= 15) return 'EXTREME RISK'
-    if (score >= 10) return 'HIGH RISK'
-    if (score >= 5) return 'MODERATE RISK'
-    return 'LOW RISK'
+  const formatPay = (amount: number, type: string) => {
+    if (type === "Negotiable") return "Negotiable"
+    const formatted = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+    
+    switch (type) {
+      case "Hourly": return `${formatted}/hr`
+      case "Per Item": return `${formatted}/item`
+      default: return formatted
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 1) return "1 day ago"
+    if (diffDays < 7) return `${diffDays} days ago`
+    return date.toLocaleDateString()
   }
 
   return (
@@ -98,14 +151,17 @@ export default function MisdeedApp() {
           <div className="flex items-center space-x-8">
             <MisdeedLogo />
             <nav className="hidden md:flex space-x-6">
-              <a href="/" className="text-gray-600 hover:text-gray-900 underline">Home</a>
+              <a href="/" className="text-gray-600 hover:text-gray-900 underline">Find Jobs</a>
               <a href="/company-reviews" className="text-gray-600 hover:text-gray-900">Company reviews</a>
               <a href="/salaries" className="text-gray-600 hover:text-gray-900">Find salaries</a>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
             <a href="/signin" className="text-blue-600 hover:text-blue-700">Sign in</a>
-            <a href="/employers" className="text-gray-600 hover:text-gray-900">Employers / Post Job</a>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => window.location.href = '/post-job'}>
+              <Plus className="w-4 h-4 mr-2" />
+              Post a Job
+            </Button>
           </div>
         </div>
       </header>
@@ -118,7 +174,7 @@ export default function MisdeedApp() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 className="pl-10 h-12 text-base"
-                placeholder="Search scam job types..."
+                placeholder="Search unorthodox jobs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -133,21 +189,33 @@ export default function MisdeedApp() {
                 onChange={(e) => setSearchLocation(e.target.value)}
               />
             </div>
-            <Button onClick={handleSearch} className="h-12 px-8 bg-red-600 hover:bg-red-700">
-              Search Scams
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-48 h-12">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {JOB_CATEGORIES.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleSearch} className="h-12 px-8 bg-blue-600 hover:bg-blue-700">
+              Find Jobs
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Alert Banner */}
-      <div className="bg-red-50 border-b border-red-200">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center space-x-2 text-red-800">
-            <AlertTriangle className="w-5 h-5" />
-            <span className="font-medium">
-              ⚠️ WARNING: These are SCAM job postings detected by our AI system. Do not apply or provide personal information!
-            </span>
+      {/* Hero Message */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              🎯 Find Unique, Unorthodox Job Opportunities
+            </h1>
+            <p className="text-gray-600">
+              From fake wedding dates to LEGO builders - discover creative gigs and unusual tasks that pay well
+            </p>
           </div>
         </div>
       </div>
@@ -159,40 +227,46 @@ export default function MisdeedApp() {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
-                {loading ? 'Loading...' : `${misdeeds.length} Scam Jobs Found`}
+                {loading ? 'Loading...' : `${jobs.length} Unique Jobs`}
               </h2>
-              <Shield className="w-5 h-5 text-red-600" />
+              <Briefcase className="w-5 h-5 text-blue-600" />
             </div>
           </div>
 
           <div className="overflow-y-auto max-h-screen">
             {loading ? (
-              <div className="p-4 text-center text-gray-500">Loading scam jobs...</div>
-            ) : misdeeds.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No scam jobs found</div>
+              <div className="p-4 text-center text-gray-500">Loading amazing jobs...</div>
+            ) : jobs.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">No jobs found</div>
             ) : (
-              misdeeds.map((misdeed, index) => (
+              jobs.map((job, index) => (
                 <div
-                  key={misdeed.id}
+                  key={job.id}
                   className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                    selectedMisdeed?.id === misdeed.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    selectedJob?.id === job.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                   }`}
-                  onClick={() => setSelectedMisdeed(misdeed)}
+                  onClick={() => setSelectedJob(job)}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-medium text-gray-900 line-clamp-2">{misdeed.job_title}</h3>
-                    <Badge className={`${getScamBadgeColor(misdeed.scam_score)} text-white text-xs`}>
-                      {misdeed.scam_score}
+                    <h3 className="font-medium text-gray-900 line-clamp-2">{job.title}</h3>
+                    <Badge className={`${getCategoryColor(job.category)} text-xs`}>
+                      {job.category}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">{misdeed.company_name}</p>
-                  <p className="text-sm text-gray-500 mb-2">{misdeed.location}</p>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
-                      {getScamLevel(misdeed.scam_score)}
-                    </Badge>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-600">
+                      {formatPay(job.pay_amount, job.pay_type)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-2">{job.location}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <User className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-500">{job.username}</span>
+                    </div>
                     <span className="text-xs text-gray-500">
-                      {new Date(misdeed.date_scraped).toLocaleDateString()}
+                      {formatDate(job.created_at)}
                     </span>
                   </div>
                 </div>
@@ -203,94 +277,81 @@ export default function MisdeedApp() {
 
         {/* Job Details */}
         <div className="flex-1 bg-white">
-          {selectedMisdeed ? (
+          {selectedJob ? (
             <div className="p-6">
-              {/* Job Header */}
-              <div className="mb-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                      {selectedMisdeed.job_title}
-                    </h1>
-                    <div className="flex items-center space-x-4 text-gray-600 mb-2">
-                      <span className="font-medium">{selectedMisdeed.company_name}</span>
-                      <span>•</span>
-                      <span>{selectedMisdeed.location}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={`${getScamBadgeColor(selectedMisdeed.scam_score)} text-white`}>
-                      Scam Score: {selectedMisdeed.scam_score}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">{selectedJob.title}</h1>
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Badge className={`${getCategoryColor(selectedJob.category)}`}>
+                      {selectedJob.category}
                     </Badge>
-                  </div>
-                </div>
-
-                {/* Scam Alert */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5" />
-                    <div>
-                      <h3 className="font-semibold text-red-800 mb-2">
-                        🚨 {getScamLevel(selectedMisdeed.scam_score)} - SCAM DETECTED
-                      </h3>
-                      <div className="space-y-1">
-                        {selectedMisdeed.scam_reasons.map((reason, index) => (
-                          <div key={index} className="flex items-center space-x-2 text-sm text-red-700">
-                            <span>•</span>
-                            <span>{reason}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex items-center space-x-1 text-green-600">
+                      <DollarSign className="w-4 h-4" />
+                      <span className="font-semibold">
+                        {formatPay(selectedJob.pay_amount, selectedJob.pay_type)}
+                      </span>
                     </div>
                   </div>
                 </div>
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm">
+                    <Bookmark className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Share className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex space-x-3 mb-6">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open(selectedMisdeed.original_url, '_blank')}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Original (CAUTION)
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Bookmark className="w-4 h-4 mr-2" />
-                    Report to Authorities
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Share className="w-4 h-4 mr-2" />
-                    Share Warning
-                  </Button>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">{selectedJob.location}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">Posted by {selectedJob.username}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">{formatDate(selectedJob.created_at)}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Briefcase className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">{selectedJob.pay_type}</span>
                 </div>
               </div>
 
               <Separator className="my-6" />
 
-              {/* Job Description */}
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Scam Job Description (ANALYSIS ONLY)
-                </h2>
-                <div className="bg-gray-50 p-4 rounded-lg border">
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedMisdeed.description}</p>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Job Description</h2>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {selectedJob.description}
+                </p>
               </div>
 
-              {/* Source Info */}
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h3 className="font-medium text-blue-900 mb-2">Detection Information</h3>
-                <div className="text-sm text-blue-700 space-y-1">
-                  <p>Source Platform: {selectedMisdeed.source_platform}</p>
-                  <p>Detected: {new Date(selectedMisdeed.date_scraped).toLocaleString()}</p>
-                  <p>Scam Score: {selectedMisdeed.scam_score}/20 (Higher = More Suspicious)</p>
-                </div>
+              <Separator className="my-6" />
+
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">How to Apply</h2>
+                <p className="text-gray-700 mb-4">{selectedJob.contact_method}</p>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  Apply Now
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  Contact {selectedJob.username}
+                </Button>
               </div>
             </div>
           ) : (
             <div className="p-6 text-center text-gray-500">
-              Select a scam job posting to view details
+              <Briefcase className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Select a job to view details</p>
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 """
 Misdeed API Backend
-FastAPI service for storing and serving scam job postings.
+FastAPI service for unorthodox job postings platform.
 """
 
 from fastapi import FastAPI, HTTPException, Depends
@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Misdeed API",
-    description="API for detecting and serving scam job postings",
+    description="API for unorthodox job postings platform",
     version="1.0.0"
 )
 
 # Add CORS middleware to allow frontend connections
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],  # Next.js dev server
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,47 +35,66 @@ app.add_middleware(
 # Database configuration
 DATABASE_PATH = "misdeeds.db"
 
-# Pydantic models
+# Pydantic models for the new job board
 class JobCreate(BaseModel):
-    job_title: str
-    company_name: str
+    title: str
     description: str
+    category: str
     location: str
-    original_url: str
-    source_platform: str
-    scam_score: int
-    scam_reasons: List[str]
+    pay_amount: float
+    pay_type: str
+    contact_method: str
+    username: str
 
 class Job(BaseModel):
     id: int
-    job_title: str
-    company_name: str
+    title: str
     description: str
+    category: str
     location: str
-    original_url: str
-    source_platform: str
-    scam_score: int
-    scam_reasons: List[str]
-    date_scraped: str
+    pay_amount: float
+    pay_type: str
+    contact_method: str
+    username: str
+    created_at: str
+
+class User(BaseModel):
+    id: int
+    username: str
+    email: str
+    created_at: str
 
 # Database functions
 def init_database():
-    """Initialize the SQLite database with the misdeeds table."""
+    """Initialize the SQLite database with the jobs and users tables."""
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     
+    # Create users table
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS misdeeds (
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            job_title TEXT NOT NULL,
-            company_name TEXT NOT NULL,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create jobs table (replacing the old misdeeds table)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS jobs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
             description TEXT NOT NULL,
-            location TEXT,
-            original_url TEXT,
-            source_platform TEXT,
-            scam_score INTEGER NOT NULL,
-            scam_reasons TEXT NOT NULL,
-            date_scraped TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            category TEXT NOT NULL,
+            location TEXT NOT NULL,
+            pay_amount REAL NOT NULL,
+            pay_type TEXT NOT NULL,
+            contact_method TEXT NOT NULL,
+            username TEXT NOT NULL,
+            user_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
     
@@ -89,10 +108,49 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row  # Enable column access by name
     return conn
 
+def seed_database_if_empty():
+    """Seed the database with mock data if it's empty."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check if jobs table is empty
+    cursor.execute("SELECT COUNT(*) FROM jobs")
+    count = cursor.fetchone()[0]
+    
+    if count == 0:
+        logger.info("Database is empty, seeding with mock data...")
+        try:
+            # Try to load mock data from file
+            with open('mock_data.json', 'r') as f:
+                mock_jobs = json.load(f)
+                
+            for job_data in mock_jobs:
+                cursor.execute('''
+                    INSERT INTO jobs (
+                        title, description, category, location,
+                        pay_amount, pay_type, contact_method, username
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    job_data['title'], job_data['description'], job_data['category'],
+                    job_data['location'], job_data['pay_amount'], job_data['pay_type'],
+                    job_data['contact_method'], job_data['username']
+                ))
+            
+            conn.commit()
+            logger.info(f"Seeded database with {len(mock_jobs)} mock jobs")
+            
+        except FileNotFoundError:
+            logger.warning("mock_data.json not found, database will remain empty")
+        except Exception as e:
+            logger.error(f"Error seeding database: {e}")
+    
+    conn.close()
+
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
     init_database()
+    seed_database_if_empty()
 
 # API Endpoints
 
@@ -100,229 +158,146 @@ async def startup_event():
 async def root():
     """Root endpoint with API information."""
     return {
-        "message": "Misdeed API - Scam Job Detection Service",
+        "message": "Misdeed API - Unorthodox Job Board Platform",
         "version": "1.0.0",
         "endpoints": {
-            "GET /api/misdeeds": "Get all scam job postings",
-            "GET /api/misdeeds/search": "Search scam job postings",
-            "POST /api/jobs": "Submit a job for analysis and storage"
+            "GET /api/jobs": "Get all job postings",
+            "GET /api/jobs/{job_id}": "Get a specific job posting",
+            "POST /api/jobs": "Create a new job posting"
         }
     }
 
-@app.post("/api/jobs", response_model=dict)
-async def submit_job(job: JobCreate):
+@app.get("/api/jobs", response_model=List[Job])
+async def get_jobs(
+    limit: Optional[int] = 100,
+    category: Optional[str] = None
+):
     """
-    Submit a job for analysis and storage.
-    Internal endpoint used by the scraper.
+    Get all job postings, optionally filtered by category.
+    Ordered from most recent to oldest.
     """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Convert scam_reasons list to JSON string
-        scam_reasons_json = json.dumps(job.scam_reasons)
+        if category:
+            cursor.execute('''
+                SELECT * FROM jobs 
+                WHERE category = ? 
+                ORDER BY created_at DESC 
+                LIMIT ?
+            ''', (category, limit))
+        else:
+            cursor.execute('''
+                SELECT * FROM jobs 
+                ORDER BY created_at DESC 
+                LIMIT ?
+            ''', (limit,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Convert rows to Job objects
+        jobs = []
+        for row in rows:
+            job = Job(
+                id=row['id'],
+                title=row['title'],
+                description=row['description'],
+                category=row['category'],
+                location=row['location'],
+                pay_amount=row['pay_amount'],
+                pay_type=row['pay_type'],
+                contact_method=row['contact_method'],
+                username=row['username'],
+                created_at=row['created_at']
+            )
+            jobs.append(job)
+        
+        logger.info(f"Retrieved {len(jobs)} jobs")
+        return jobs
+        
+    except Exception as e:
+        logger.error(f"Error retrieving jobs: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving jobs")
+
+@app.get("/api/jobs/{job_id}", response_model=Job)
+async def get_job(job_id: int):
+    """Get the details of a single job posting by its ID."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM jobs WHERE id = ?', (job_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        job = Job(
+            id=row['id'],
+            title=row['title'],
+            description=row['description'],
+            category=row['category'],
+            location=row['location'],
+            pay_amount=row['pay_amount'],
+            pay_type=row['pay_type'],
+            contact_method=row['contact_method'],
+            username=row['username'],
+            created_at=row['created_at']
+        )
+        
+        return job
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving job {job_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving job")
+
+@app.post("/api/jobs", response_model=dict)
+async def create_job(job: JobCreate):
+    """
+    Create a new job posting.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         
         cursor.execute('''
-            INSERT INTO misdeeds (
-                job_title, company_name, description, location,
-                original_url, source_platform, scam_score, scam_reasons
+            INSERT INTO jobs (
+                title, description, category, location,
+                pay_amount, pay_type, contact_method, username
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            job.job_title, job.company_name, job.description, job.location,
-            job.original_url, job.source_platform, job.scam_score, scam_reasons_json
+            job.title, job.description, job.category, job.location,
+            job.pay_amount, job.pay_type, job.contact_method, job.username
         ))
         
         job_id = cursor.lastrowid
         conn.commit()
         conn.close()
         
-        logger.info(f"Job stored with ID {job_id}: {job.job_title} (Score: {job.scam_score})")
+        logger.info(f"Job created with ID {job_id}: {job.title}")
         
         return {
-            "message": "Job submitted successfully",
-            "job_id": job_id,
-            "scam_score": job.scam_score
+            "message": "Job created successfully",
+            "job_id": job_id
         }
         
     except Exception as e:
-        logger.error(f"Error storing job: {e}")
-        raise HTTPException(status_code=500, detail="Error storing job")
+        logger.error(f"Error creating job: {e}")
+        raise HTTPException(status_code=500, detail="Error creating job")
 
+# Keep the old misdeeds endpoint for backward compatibility during transition
 @app.get("/api/misdeeds", response_model=List[Job])
-async def get_misdeeds(
+async def get_misdeeds_compatibility(
     limit: Optional[int] = 100,
-    min_score: Optional[int] = 5
+    min_score: Optional[int] = None
 ):
-    """
-    Get all scam job postings above the minimum score threshold.
-    Ordered from highest scam score to lowest.
-    """
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT * FROM misdeeds 
-            WHERE scam_score >= ? 
-            ORDER BY scam_score DESC, date_scraped DESC 
-            LIMIT ?
-        ''', (min_score, limit))
-        
-        rows = cursor.fetchall()
-        conn.close()
-        
-        # Convert rows to Job objects
-        misdeeds = []
-        for row in rows:
-            scam_reasons = json.loads(row['scam_reasons'])
-            job = Job(
-                id=row['id'],
-                job_title=row['job_title'],
-                company_name=row['company_name'],
-                description=row['description'],
-                location=row['location'],
-                original_url=row['original_url'],
-                source_platform=row['source_platform'],
-                scam_score=row['scam_score'],
-                scam_reasons=scam_reasons,
-                date_scraped=row['date_scraped']
-            )
-            misdeeds.append(job)
-        
-        logger.info(f"Retrieved {len(misdeeds)} misdeeds")
-        return misdeeds
-        
-    except Exception as e:
-        logger.error(f"Error retrieving misdeeds: {e}")
-        raise HTTPException(status_code=500, detail="Error retrieving misdeeds")
-
-@app.get("/api/misdeeds/search", response_model=List[Job])
-async def search_misdeeds(
-    q: str,
-    limit: Optional[int] = 50,
-    min_score: Optional[int] = 5
-):
-    """
-    Search for scam job postings by query string.
-    Searches in job title, company name, and description.
-    """
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        search_query = f"%{q}%"
-        cursor.execute('''
-            SELECT * FROM misdeeds 
-            WHERE scam_score >= ? 
-            AND (
-                job_title LIKE ? OR 
-                company_name LIKE ? OR 
-                description LIKE ?
-            )
-            ORDER BY scam_score DESC, date_scraped DESC 
-            LIMIT ?
-        ''', (min_score, search_query, search_query, search_query, limit))
-        
-        rows = cursor.fetchall()
-        conn.close()
-        
-        # Convert rows to Job objects
-        misdeeds = []
-        for row in rows:
-            scam_reasons = json.loads(row['scam_reasons'])
-            job = Job(
-                id=row['id'],
-                job_title=row['job_title'],
-                company_name=row['company_name'],
-                description=row['description'],
-                location=row['location'],
-                original_url=row['original_url'],
-                source_platform=row['source_platform'],
-                scam_score=row['scam_score'],
-                scam_reasons=scam_reasons,
-                date_scraped=row['date_scraped']
-            )
-            misdeeds.append(job)
-        
-        logger.info(f"Search for '{q}' returned {len(misdeeds)} misdeeds")
-        return misdeeds
-        
-    except Exception as e:
-        logger.error(f"Error searching misdeeds: {e}")
-        raise HTTPException(status_code=500, detail="Error searching misdeeds")
-
-@app.get("/api/stats")
-async def get_stats():
-    """Get statistics about the misdeeds database."""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Total misdeeds
-        cursor.execute('SELECT COUNT(*) as total FROM misdeeds')
-        total = cursor.fetchone()['total']
-        
-        # High-score misdeeds (>= 10)
-        cursor.execute('SELECT COUNT(*) as high_score FROM misdeeds WHERE scam_score >= 10')
-        high_score = cursor.fetchone()['high_score']
-        
-        # Recent misdeeds (last 24 hours)
-        cursor.execute('''
-            SELECT COUNT(*) as recent 
-            FROM misdeeds 
-            WHERE date_scraped >= datetime('now', '-1 day')
-        ''')
-        recent = cursor.fetchone()['recent']
-        
-        # Top scam reasons
-        cursor.execute('SELECT scam_reasons FROM misdeeds')
-        all_reasons = cursor.fetchall()
-        
-        reason_counts = {}
-        for row in all_reasons:
-            reasons = json.loads(row['scam_reasons'])
-            for reason in reasons:
-                reason_counts[reason] = reason_counts.get(reason, 0) + 1
-        
-        top_reasons = sorted(reason_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        
-        conn.close()
-        
-        return {
-            "total_misdeeds": total,
-            "high_score_misdeeds": high_score,
-            "recent_misdeeds": recent,
-            "top_scam_reasons": [{"reason": reason, "count": count} for reason, count in top_reasons]
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting stats: {e}")
-        raise HTTPException(status_code=500, detail="Error getting statistics")
-
-@app.delete("/api/misdeeds/{job_id}")
-async def delete_misdeed(job_id: int):
-    """Delete a specific misdeed by ID."""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('DELETE FROM misdeeds WHERE id = ?', (job_id,))
-        
-        if cursor.rowcount == 0:
-            conn.close()
-            raise HTTPException(status_code=404, detail="Misdeed not found")
-        
-        conn.commit()
-        conn.close()
-        
-        logger.info(f"Deleted misdeed with ID {job_id}")
-        return {"message": "Misdeed deleted successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error deleting misdeed: {e}")
-        raise HTTPException(status_code=500, detail="Error deleting misdeed")
+    """Backward compatibility endpoint - redirects to jobs."""
+    return await get_jobs(limit=limit)
 
 if __name__ == "__main__":
     import uvicorn
