@@ -263,7 +263,6 @@ I'll review applications as they come in and reply within 48 hours. Help me turn
           </div>
           <div className="flex items-center space-x-4">
             <a href="/signin" className="text-blue-600 hover:text-blue-700">Sign in</a>
-            <a href="/employers" className="text-gray-600 hover:text-gray-900">Employers / Post Job</a>
           </div>
         </div>
       </header>
